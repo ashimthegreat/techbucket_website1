@@ -1,6 +1,6 @@
 import "dotenv/config";
 import express from "express";
-import cors from "cors"; // 1. Added cors import
+import cors from "cors";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
@@ -32,8 +32,7 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // 2. Added CORS configuration
-  // This allows your Phase 3 frontend to talk to your Phase 1 API
+  // ALLOW FRONTEND ACCESS
   app.use(cors({
     origin: [
       "https://techbucket-public.onrender.com", 
@@ -45,14 +44,11 @@ async function startServer() {
     allowedHeaders: ["Content-Type", "Authorization", "x-trpc-source"]
   }));
 
-  // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   
-  // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   
-  // tRPC API
   app.use(
     "/api/trpc",
     createExpressMiddleware({
@@ -61,7 +57,6 @@ async function startServer() {
     })
   );
 
-  // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
@@ -71,11 +66,7 @@ async function startServer() {
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
 
-  if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
-  }
-
-  server.listen(port, () => {
+  server.listen(port, "0.0.0.0", () => {
     console.log(`Server running on port ${port}`);
   });
 }

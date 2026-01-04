@@ -18,41 +18,32 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      // Use the environment variable for the backend URL
-      // If not set, it defaults to your specific Render API URL
-      const API_BASE_URL = import.meta.env.VITE_API_URL || "https://techbucket-website1.onrender.com";
+      // Direct link to your live API
+      const API_URL = "https://techbucket-website1.onrender.com/api/trpc/admin.login";
       
-      // We ensure the path is correct for tRPC mutations
-      const response = await fetch(`${API_BASE_URL}/trpc/admin.login`, {
+      const response = await fetch(API_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          // tRPC expects the data wrapped in an input object
-          input: {
-            username,
-            password,
-          },
+          input: { username, password }
         }),
       });
 
       const data = await response.json();
 
-      if (!response.ok || data.error) {
-        // Handle tRPC specific error messages
-        const errorMessage = data.error?.json?.message || data.error?.message || "Login failed";
-        setError(errorMessage);
-      } else {
-        // Success: Store admin session
-        // Note: tRPC results are usually nested in .result.data.json
-        const sessionData = data.result?.data?.json || data.result?.data;
-        localStorage.setItem("adminSession", JSON.stringify(sessionData));
+      if (data.error) {
+        // Handle tRPC error format
+        const msg = data.error.json?.message || data.error.message || "Invalid credentials";
+        setError(msg);
+      } else if (data.result?.data) {
+        // Success: Store session and go to Dashboard
+        localStorage.setItem("adminSession", JSON.stringify(data.result.data));
         setLocation("/admin/dashboard");
+      } else {
+        setError("Login failed. Please check your credentials.");
       }
     } catch (err) {
-      console.error("Login error:", err);
-      setError("Unable to connect to the server. Please check your internet or API status.");
+      setError("Cannot reach server. Ensure backend is running.");
     } finally {
       setLoading(false);
     }
@@ -61,62 +52,39 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 px-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-2">
+        <CardHeader>
           <CardTitle className="text-2xl">Admin Login</CardTitle>
-          <CardDescription>Enter your credentials to access the admin dashboard</CardDescription>
+          <CardDescription>Phase 2: Management Console</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+              <div className="p-3 bg-red-900/20 border border-red-500/50 rounded text-red-400 text-sm">
                 {error}
               </div>
             )}
-
             <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium">
-                Username
-              </label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+              <label className="text-sm font-medium">Username</label>
+              <Input 
+                value={username} 
+                onChange={(e) => setUsername(e.target.value)} 
+                required 
                 disabled={loading}
-                required
               />
             </div>
-
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+              <label className="text-sm font-medium">Password</label>
+              <Input 
+                type="password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
                 disabled={loading}
-                required
               />
             </div>
-
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Logging in...
-                </>
-              ) : (
-                "Login"
-              )}
+              {loading ? <Loader2 className="animate-spin" /> : "Sign In"}
             </Button>
-
-            <p className="text-xs text-gray-500 text-center mt-4">
-              Authorized personnel only.
-            </p>
           </form>
         </CardContent>
       </Card>
