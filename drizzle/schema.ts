@@ -1,94 +1,55 @@
-import {
-  int,
-  mysqlEnum,
-  mysqlTable,
-  text,
-  timestamp,
-  varchar,
-  boolean,
-  decimal,
-  longtext,
-} from "drizzle-orm/mysql-core";
+import { integer as int, pgTable, text, timestamp, varchar, boolean, decimal } from "drizzle-orm/pg-core";
 
-/**
- * Core user table backing auth flow.
- * Extended with admin authentication for the dashboard.
- */
-export const users = mysqlTable("users", {
-  id: int("id").autoincrement().primaryKey(),
+export const users = pgTable("users", {
+  id: int("id").primaryKey().generatedAlwaysAsIdentity(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: text("role").default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-
-/**
- * Admin credentials table for dashboard authentication
- * Separate from OAuth users for independent admin management
- */
-export const adminCredentials = mysqlTable("admin_credentials", {
-  id: int("id").autoincrement().primaryKey(),
+export const adminCredentials = pgTable("admin_credentials", {
+  id: int("id").primaryKey().generatedAlwaysAsIdentity(),
   username: varchar("username", { length: 100 }).notNull().unique(),
   passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   isActive: boolean("isActive").default(true).notNull(),
   lastLogin: timestamp("lastLogin"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export type AdminCredential = typeof adminCredentials.$inferSelect;
-export type InsertAdminCredential = typeof adminCredentials.$inferInsert;
-
-/**
- * Product categories for organization
- */
-export const categories = mysqlTable("categories", {
-  id: int("id").autoincrement().primaryKey(),
+export const categories = pgTable("categories", {
+  id: int("id").primaryKey().generatedAlwaysAsIdentity(),
   name: varchar("name", { length: 100 }).notNull(),
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   description: text("description"),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export type Category = typeof categories.$inferSelect;
-export type InsertCategory = typeof categories.$inferInsert;
-
-/**
- * Product brands/manufacturers
- */
-export const brands = mysqlTable("brands", {
-  id: int("id").autoincrement().primaryKey(),
+export const brands = pgTable("brands", {
+  id: int("id").primaryKey().generatedAlwaysAsIdentity(),
   name: varchar("name", { length: 100 }).notNull(),
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   logo: varchar("logo", { length: 500 }),
   description: text("description"),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export type Brand = typeof brands.$inferSelect;
-export type InsertBrand = typeof brands.$inferInsert;
-
-/**
- * Products table with full details
- */
-export const products = mysqlTable("products", {
-  id: int("id").autoincrement().primaryKey(),
+export const products = pgTable("products", {
+  id: int("id").primaryKey().generatedAlwaysAsIdentity(),
   name: varchar("name", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
-  description: longtext("description"),
-  specifications: longtext("specifications"), // JSON string
+  description: text("description"),
+  specifications: text("specifications"),
   categoryId: int("categoryId").notNull(),
   brandId: int("brandId").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }),
@@ -96,116 +57,68 @@ export const products = mysqlTable("products", {
   isActive: boolean("isActive").default(true).notNull(),
   isFeatured: boolean("isFeatured").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export type Product = typeof products.$inferSelect;
-export type InsertProduct = typeof products.$inferInsert;
-
-/**
- * Services offered by TechBucket
- */
-export const services = mysqlTable("services", {
-  id: int("id").autoincrement().primaryKey(),
+export const services = pgTable("services", {
+  id: int("id").primaryKey().generatedAlwaysAsIdentity(),
   name: varchar("name", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
-  description: longtext("description"),
+  description: text("description"),
   icon: varchar("icon", { length: 500 }),
   image: varchar("image", { length: 500 }),
-  features: longtext("features"), // JSON string
+  features: text("features"),
   isActive: boolean("isActive").default(true).notNull(),
   isFeatured: boolean("isFeatured").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export type Service = typeof services.$inferSelect;
-export type InsertService = typeof services.$inferInsert;
-
-/**
- * Quote requests from customers
- */
-export const quoteRequests = mysqlTable("quote_requests", {
-  id: int("id").autoincrement().primaryKey(),
+export const quoteRequests = pgTable("quote_requests", {
+  id: int("id").primaryKey().generatedAlwaysAsIdentity(),
   productId: int("productId"),
   customerName: varchar("customerName", { length: 255 }).notNull(),
   customerEmail: varchar("customerEmail", { length: 320 }).notNull(),
   customerPhone: varchar("customerPhone", { length: 20 }).notNull(),
   companyName: varchar("companyName", { length: 255 }),
   quantity: int("quantity"),
-  message: longtext("message"),
-  status: mysqlEnum("status", ["pending", "reviewed", "responded", "archived"]).default("pending").notNull(),
+  message: text("message"),
+  status: text("status").default("pending").notNull(),
   isRead: boolean("isRead").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export type QuoteRequest = typeof quoteRequests.$inferSelect;
-export type InsertQuoteRequest = typeof quoteRequests.$inferInsert;
-
-/**
- * Contact form submissions
- */
-export const contactSubmissions = mysqlTable("contact_submissions", {
-  id: int("id").autoincrement().primaryKey(),
+export const contactSubmissions = pgTable("contact_submissions", {
+  id: int("id").primaryKey().generatedAlwaysAsIdentity(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   phone: varchar("phone", { length: 20 }),
   subject: varchar("subject", { length: 255 }).notNull(),
-  message: longtext("message").notNull(),
-  status: mysqlEnum("status", ["new", "read", "responded", "archived"]).default("new").notNull(),
+  message: text("message").notNull(),
+  status: text("status").default("new").notNull(),
   isRead: boolean("isRead").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export type ContactSubmission = typeof contactSubmissions.$inferSelect;
-export type InsertContactSubmission = typeof contactSubmissions.$inferInsert;
-
-/**
- * Support inquiries
- */
-export const supportInquiries = mysqlTable("support_inquiries", {
-  id: int("id").autoincrement().primaryKey(),
+export const supportInquiries = pgTable("support_inquiries", {
+  id: int("id").primaryKey().generatedAlwaysAsIdentity(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   phone: varchar("phone", { length: 20 }),
   subject: varchar("subject", { length: 255 }).notNull(),
-  message: longtext("message").notNull(),
-  priority: mysqlEnum("priority", ["low", "medium", "high"]).default("medium").notNull(),
-  status: mysqlEnum("status", ["open", "in_progress", "resolved", "closed"]).default("open").notNull(),
+  message: text("message").notNull(),
+  priority: text("priority").default("medium").notNull(),
+  status: text("status").default("open").notNull(),
   isRead: boolean("isRead").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export type SupportInquiry = typeof supportInquiries.$inferSelect;
-export type InsertSupportInquiry = typeof supportInquiries.$inferInsert;
-
-/**
- * Email configuration for admin notifications
- */
-export const emailConfig = mysqlTable("email_config", {
-  id: int("id").autoincrement().primaryKey(),
-  adminEmail: varchar("adminEmail", { length: 320 }).notNull(),
-  smtpHost: varchar("smtpHost", { length: 255 }),
-  smtpPort: int("smtpPort"),
-  smtpUser: varchar("smtpUser", { length: 255 }),
-  smtpPassword: varchar("smtpPassword", { length: 255 }),
-  fromEmail: varchar("fromEmail", { length: 320 }),
-  fromName: varchar("fromName", { length: 255 }),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type EmailConfig = typeof emailConfig.$inferSelect;
-export type InsertEmailConfig = typeof emailConfig.$inferInsert;
-
-/**
- * Website settings and SEO metadata
- */
-export const siteSettings = mysqlTable("site_settings", {
-  id: int("id").autoincrement().primaryKey(),
-  siteName: varchar("siteName", { length: 255 }).default("TechBucket Pvt Ltd").notNull(),
+export const siteSettings = pgTable("site_settings", {
+  id: int("id").primaryKey().generatedAlwaysAsIdentity(),
+  siteName: varchar("siteName", { length: 255 }).default("TechBucket").notNull(),
   siteDescription: text("siteDescription"),
   siteKeywords: text("siteKeywords"),
   siteUrl: varchar("siteUrl", { length: 500 }),
@@ -214,9 +127,29 @@ export const siteSettings = mysqlTable("site_settings", {
   phone: varchar("phone", { length: 20 }),
   email: varchar("email", { length: 320 }),
   address: text("address"),
-  socialLinks: longtext("socialLinks"), // JSON string
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  socialLinks: text("socialLinks"),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
+export const emailConfig = pgTable("email_config", {
+  id: int("id").primaryKey().generatedAlwaysAsIdentity(),
+  host: varchar("host", { length: 255 }).notNull(),
+  port: int("port").notNull(),
+  user: varchar("user", { length: 255 }).notNull(),
+  pass: varchar("pass", { length: 255 }).notNull(),
+  from: varchar("from", { length: 255 }).notNull(),
+  secure: boolean("secure").default(true).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type User = typeof users.$inferSelect;
+export type AdminCredential = typeof adminCredentials.$inferSelect;
+export type Category = typeof categories.$inferSelect;
+export type Brand = typeof brands.$inferSelect;
+export type Product = typeof products.$inferSelect;
+export type Service = typeof services.$inferSelect;
+export type QuoteRequest = typeof quoteRequests.$inferSelect;
+export type ContactSubmission = typeof contactSubmissions.$inferSelect;
+export type SupportInquiry = typeof supportInquiries.$inferSelect;
 export type SiteSetting = typeof siteSettings.$inferSelect;
-export type InsertSiteSetting = typeof siteSettings.$inferInsert;
+export type EmailConfig = typeof emailConfig.$inferSelect;
