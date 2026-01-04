@@ -32,23 +32,22 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // ALLOW FRONTEND ACCESS
+  // 1. FORCE CORS TO ALLOW EVERYTHING (Phase 2 fix)
   app.use(cors({
-    origin: [
-      "https://techbucket-public.onrender.com", 
-      "http://localhost:5173",
-      "http://localhost:3000"
-    ],
+    origin: true,
     credentials: true,
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "x-trpc-source"]
   }));
+  app.options('*', cors());
 
+  // 2. Body Parsers
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   
   registerOAuthRoutes(app);
   
+  // 3. tRPC
   app.use(
     "/api/trpc",
     createExpressMiddleware({

@@ -18,70 +18,53 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      // Direct link to your live API
-      const API_URL = "https://techbucket-website1.onrender.com/api/trpc/admin.login";
+      const API_URL = "https://techbucket-website1.onrender.com/api/trpc/admin.login?batch=1";
       
       const response = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-trpc-source": "react"
+        },
         body: JSON.stringify({
-          input: { username, password }
+          "0": {
+            json: { username, password }
+          }
         }),
       });
 
-      const data = await response.json();
+      const resJson = await response.json();
+      const data = Array.isArray(resJson) ? resJson[0] : resJson;
 
       if (data.error) {
-        // Handle tRPC error format
         const msg = data.error.json?.message || data.error.message || "Invalid credentials";
         setError(msg);
-      } else if (data.result?.data) {
-        // Success: Store session and go to Dashboard
-        localStorage.setItem("adminSession", JSON.stringify(data.result.data));
+      } else if (data.result?.data?.json || data.result?.data) {
+        const adminData = data.result.data.json || data.result.data;
+        localStorage.setItem("adminSession", JSON.stringify(adminData));
         setLocation("/admin/dashboard");
       } else {
-        setError("Login failed. Please check your credentials.");
+        setError("Login failed. Check credentials.");
       }
     } catch (err) {
-      setError("Cannot reach server. Ensure backend is running.");
+      setError("Network error. Backend might be sleeping.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">Admin Login</CardTitle>
-          <CardDescription>Phase 2: Management Console</CardDescription>
+          <CardTitle>Admin Login</CardTitle>
+          <CardDescription>TechBucket Phase 2</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
-            {error && (
-              <div className="p-3 bg-red-900/20 border border-red-500/50 rounded text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Username</label>
-              <Input 
-                value={username} 
-                onChange={(e) => setUsername(e.target.value)} 
-                required 
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Password</label>
-              <Input 
-                type="password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                required 
-                disabled={loading}
-              />
-            </div>
+            {error && <div className="text-red-500 text-sm font-medium">{error}</div>}
+            <Input placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required />
+            <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="animate-spin" /> : "Sign In"}
             </Button>
