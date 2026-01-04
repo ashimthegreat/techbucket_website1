@@ -18,12 +18,18 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/trpc/admin.login", {
+      // Use the environment variable for the backend URL
+      // If not set, it defaults to your specific Render API URL
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "https://techbucket-website1.onrender.com";
+      
+      // We ensure the path is correct for tRPC mutations
+      const response = await fetch(`${API_BASE_URL}/trpc/admin.login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          // tRPC expects the data wrapped in an input object
           input: {
             username,
             password,
@@ -33,15 +39,20 @@ export default function AdminLogin() {
 
       const data = await response.json();
 
-      if (data.error) {
-        setError(data.error.message || "Login failed");
+      if (!response.ok || data.error) {
+        // Handle tRPC specific error messages
+        const errorMessage = data.error?.json?.message || data.error?.message || "Login failed";
+        setError(errorMessage);
       } else {
-        // Store admin session in localStorage
-        localStorage.setItem("adminSession", JSON.stringify(data.result.data));
+        // Success: Store admin session
+        // Note: tRPC results are usually nested in .result.data.json
+        const sessionData = data.result?.data?.json || data.result?.data;
+        localStorage.setItem("adminSession", JSON.stringify(sessionData));
         setLocation("/admin/dashboard");
       }
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      console.error("Login error:", err);
+      setError("Unable to connect to the server. Please check your internet or API status.");
     } finally {
       setLoading(false);
     }
@@ -104,7 +115,7 @@ export default function AdminLogin() {
             </Button>
 
             <p className="text-xs text-gray-500 text-center mt-4">
-              Default credentials: admin / admin
+              Authorized personnel only.
             </p>
           </form>
         </CardContent>
